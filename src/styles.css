@@ -1,0 +1,139 @@
+:root {
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  color: #1d2a33;
+  background: linear-gradient(180deg, #f6fbff 0%, #eef6ff 100%);
+  --sticky-header-top: 8px;
+  --sticky-panel-top: 96px;
+  --sticky-panel-top-b: 88px;
+  --sticky-panel-max-height: 42vh;
+  --sticky-panel-padding-bottom: 6px;
+  --sheet-table-viewport-height: 58vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 16px 28px;
+}
+
+.header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  position: sticky;
+  top: var(--sticky-header-top);
+  z-index: 20;
+  background: rgba(246, 251, 255, 0.92);
+  backdrop-filter: blur(4px);
+  border: 1px solid #d8e8f5;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  border: 1px solid #94b8d1;
+  background: #ffffff;
+  color: #27465a;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #d8ecff;
+  border-color: #6aa5d1;
+  font-weight: 700;
+}
+
+.notice {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff7dd;
+  border: 1px solid #f0d27e;
+  color: #5a4716;
+  font-size: 14px;
+}
+
+button {
+  font: inherit;
+}
+
+@media (max-width: 800px) {
+  :root {
+    --sticky-header-top: 4px;
+    --sticky-panel-top: 72px;
+    --sticky-panel-top-b: 68px;
+    --sticky-panel-max-height: 32vh;
+    --sticky-panel-padding-bottom: 4px;
+    --sheet-table-viewport-height: 62vh;
+  }
+
+  .app {
+    padding: 12px 10px 18px;
+  }
+
+  .header {
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .header h1 {
+    font-size: 22px;
+  }
+
+  .tab {
+    padding: 7px 9px;
+    font-size: 13px;
+  }
+
+  .notice {
+    margin-top: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 560px) {
+  :root {
+    --sticky-panel-top: 64px;
+    --sticky-panel-max-height: 28vh;
+    --sticky-panel-top-b: 60px;
+    --sheet-table-viewport-height: 64vh;
+  }
+
+  .header h1 {
+    font-size: 19px;
+  }
+
+  .tabs {
+    gap: 6px;
+  }
+
+  .tab {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+}
