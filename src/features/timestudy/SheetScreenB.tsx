@@ -1,7 +1,10 @@
 import type { CSSProperties, MouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Card } from "../../components/ui/Card";
 import { build24hGrid, type GridRow, type LogForGrid } from "./build24hGrid";
+import { formatElapsed } from "./inProgressDisplay";
+import { InProgressEmpty, InProgressSummary } from "./InProgressSummary";
 import type { InProgressAction, StaffOption } from "./InputScreenA";
 import { slotLabel } from "./timeSlots";
 
@@ -257,24 +260,19 @@ export function SheetScreenB({
           </details>
         </div>
 
-        <div style={progressCardStyle}>
-          <strong style={{ color: "#234760" }}>進行中</strong>
+        <Card variant={inProgress ? "inProgressActive" : "inProgress"} style={progressCardStyle}>
           {inProgress ? (
-            <div style={{ display: "grid", gap: 4, fontSize: 13 }}>
-              <div style={inProgressMetaRowStyle}>
-                <span>職員: {inProgressStaffName}</span>
-                <span>項目: {inProgress.actionName}</span>
-                <span>開始: {new Date(inProgress.startTime).toLocaleString("ja-JP")}</span>
-              </div>
-              <div style={inProgressElapsedRowStyle}>
-                <span style={{ fontWeight: 700, color: "#9a2f3f" }}>経過: {elapsedText}</span>
-                {isLongRunning ? <span style={inProgressWarnStyle}>5分以上進行中です。終了登録漏れに注意してください。</span> : null}
-              </div>
-            </div>
+            <InProgressSummary
+              staffName={inProgressStaffName}
+              actionName={inProgress.actionName}
+              startTime={inProgress.startTime}
+              elapsedText={elapsedText}
+              isLongRunning={isLongRunning}
+            />
           ) : (
-            <span style={{ fontSize: 13, color: "#556f80" }}>進行中の記録はありません</span>
+            <InProgressEmpty />
           )}
-        </div>
+        </Card>
 
         <p style={validationTextStyle}>列合計バリデーション: 合計10分 = 水色 / 10分未満 = 赤 / 10分超過 = 黄色</p>
         <div style={submitStatusWrapStyle}>
@@ -465,13 +463,6 @@ function formatMinutes(minutes: number | null): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function formatElapsed(startTime: Date, now: number): string {
-  const diffSeconds = Math.max(0, Math.floor((now - new Date(startTime).getTime()) / 1000));
-  const mm = Math.floor(diffSeconds / 60);
-  const ss = diffSeconds % 60;
-  return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
-}
-
 function chunkArray(values: number[], size: number): number[][] {
   if (size <= 0) return [values];
   const chunks: number[][] = [];
@@ -639,25 +630,6 @@ const tableViewportStyle: CSSProperties = {
   borderRadius: 10,
   marginTop: 0,
   background: "#fff",
-};
-
-const inProgressMetaRowStyle: CSSProperties = {
-  display: "flex",
-  gap: 12,
-  flexWrap: "wrap",
-  alignItems: "center",
-};
-
-const inProgressElapsedRowStyle: CSSProperties = {
-  display: "flex",
-  gap: 12,
-  flexWrap: "wrap",
-  alignItems: "center",
-};
-
-const inProgressWarnStyle: CSSProperties = {
-  color: "#8f2b35",
-  fontSize: 12,
 };
 
 const mobileControlRowStyle: CSSProperties = {

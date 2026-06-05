@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { TIME_STUDY_ACTIONS, type TimeStudyActionDefinition } from "../../config/timeStudyActions";
+import { formatElapsed } from "./inProgressDisplay";
+import { InProgressEmpty, InProgressSummary } from "./InProgressSummary";
 
 export type StaffOption = {
   id: string;
@@ -249,22 +251,17 @@ export function InputScreenA({
         <span>{selectedStaffId ? selectedStaffName : "未設定（画面Aで選択）"}</span>
       </Card>
 
-      <Card
-        variant={activeAction ? "inProgressActive" : "inProgress"}
-        style={stickyInProgressCardStyle}
-      >
-        {activeAction ? <span className="in-progress-badge">記録中</span> : null}
-        <strong style={{ color: "var(--color-text-strong)" }}>進行中</strong>
+      <Card variant={activeAction ? "inProgressActive" : "inProgress"} style={stickyInProgressCardStyle}>
         {activeAction ? (
-          <div style={{ display: "grid", gap: 2, fontSize: 13 }}>
-            <span>職員: {selectedStaffName}</span>
-            <span>項目: {activeAction.action.actionName}</span>
-            <span>開始: {activeAction.startTime.toLocaleString("ja-JP")}</span>
-            <span style={{ fontWeight: 700, color: "var(--color-danger)" }}>経過: {elapsedText}</span>
-            {isLongRunning ? <span style={warningTextStyle}>5分以上進行中です。終了登録漏れに注意してください。</span> : null}
-          </div>
+          <InProgressSummary
+            staffName={selectedStaffName}
+            actionName={activeAction.action.actionName}
+            startTime={activeAction.startTime}
+            elapsedText={elapsedText}
+            isLongRunning={isLongRunning}
+          />
         ) : (
-          <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>進行中の記録はありません</span>
+          <InProgressEmpty />
         )}
       </Card>
 
@@ -385,13 +382,6 @@ export function InputScreenA({
   );
 }
 
-function formatElapsed(startTime: Date, now: number): string {
-  const diffSeconds = Math.max(0, Math.floor((now - new Date(startTime).getTime()) / 1000));
-  const mm = Math.floor(diffSeconds / 60);
-  const ss = diffSeconds % 60;
-  return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
-}
-
 const staffInfoCardStyle: CSSProperties = {
   display: "flex",
   gap: 10,
@@ -429,9 +419,3 @@ const stickyInProgressCardStyle: CSSProperties = {
   overflowY: "auto",
 };
 
-const warningTextStyle: CSSProperties = {
-  marginTop: 4,
-  color: "#9a2f3f",
-  fontSize: 12,
-  fontWeight: 700,
-};
