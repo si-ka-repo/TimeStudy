@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { exportOfficialTemplate, type ExportMeta } from "./features/export/exportOfficialTemplate";
+import { isCloudSyncEnabled, loadCloudSnapshot, saveCloudSnapshot, type CloudSnapshot } from "./features/persistence/cloudSnapshot";
+import { AnalysisScreenD } from "./features/timestudy/AnalysisScreenD";
 import { SettingsScreenC, type WorkHourPreset } from "./features/timestudy/SettingsScreenC";
 import { InputScreenA, type InProgressAction, type LogDraft, type StaffOption } from "./features/timestudy/InputScreenA";
 import { SheetScreenB } from "./features/timestudy/SheetScreenB";
 
-type UiTab = "A" | "B" | "C";
+type UiTab = "A" | "B" | "C" | "D";
 
 type UiLog = {
   id: string;
@@ -45,6 +47,7 @@ export function App() {
   const todayIso = getTodayIsoDate();
   const persistedSettings = readPersistedSettings();
   const persistedSessionData = readSessionData();
+  const cloudEnabled = isCloudSyncEnabled();
   const [activeTab, setActiveTab] = useState<UiTab>("A");
   const [logs, setLogs] = useState<UiLog[]>(persistedSessionData.logs);
   const [inProgress, setInProgress] = useState<InProgressAction | null>(null);
@@ -63,6 +66,8 @@ export function App() {
   });
   const [manualGridValues, setManualGridValues] = useState<Record<string, number>>(persistedSessionData.manualGridValues);
   const [notice, setNotice] = useState<string>("準備が完了しました。画面Aで設定してください。");
+  const [isCloudReady, setIsCloudReady] = useState(false);
+  const saveTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     try {
@@ -114,6 +119,95 @@ export function App() {
       // ignore write error
     }
   }, [logs, manualGridValues]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrapCloud() {
+      if (!cloudEnabled) {
+        setIsCloudReady(true);
+        return;
+      }
+
+      try {
+        const snapshot = await loadCloudSnapshot();
+        if (!snapshot || cancelled) {
+          setIsCloudReady(true);
+          return;
+        }
+
+        setStaffs(snapshot.staffs);
+        setPresets(snapshot.presets);
+        setSelectedStaffId(snapshot.selectedStaffId);
+        setWorkHourStart(snapshot.workHourStart);
+        setWorkHourEnd(snapshot.workHourEnd);
+        setSurveyDateIso(snapshot.surveyDateIso);
+        setExportMeta(snapshot.exportMeta);
+        setLogs(
+          snapshot.logs.map((log) => ({
+            ...log,
+            startTime: new Date(log.startTime),
+            endTime: log.endTime ? new Date(log.endTime) : undefined,
+          })),
+        );
+        setManualGridValues(snapshot.manualGridValues ?? {});
+        setNotice("クラウドデータを読み込みました。");
+      } catch {
+        if (!cancelled) setNotice("クラウドデータの読み込みに失敗しました。ローカルデータで継続します。");
+      } finally {
+        if (!cancelled) setIsCloudReady(true);
+      }
+    }
+
+    void bootstrapCloud();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cloudEnabled]);
+
+  useEffect(() => {
+    if (!cloudEnabled || !isCloudReady) return;
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+
+    const snapshot: CloudSnapshot = {
+      staffs,
+      presets,
+      selectedStaffId,
+      workHourStart,
+      workHourEnd,
+      surveyDateIso,
+      exportMeta,
+      logs: logs.map((log) => ({
+        ...log,
+        startTime: log.startTime.toISOString(),
+        endTime: log.endTime ? log.endTime.toISOString() : undefined,
+      })),
+      manualGridValues,
+    };
+
+    saveTimerRef.current = window.setTimeout(() => {
+      void saveCloudSnapshot(snapshot).catch(() => {
+        setNotice("クラウド保存に失敗しました。ローカル保存は継続しています。");
+      });
+    }, 800);
+
+    return () => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    };
+  }, [
+    cloudEnabled,
+    isCloudReady,
+    staffs,
+    presets,
+    selectedStaffId,
+    workHourStart,
+    workHourEnd,
+    surveyDateIso,
+    exportMeta,
+    logs,
+    manualGridValues,
+  ]);
 
   const sortedLogs = useMemo(
     () => [...logs].sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
@@ -307,6 +401,9 @@ export function App() {
           <button type="button" className={activeTab === "C" ? "tab active" : "tab"} onClick={() => switchTab("C")}>
             画面C 提出チェック
           </button>
+          <button type="button" className={activeTab === "D" ? "tab active" : "tab"} onClick={() => switchTab("D")}>
+            画面D DX改善提案
+          </button>
         </div>
       </header>
 
@@ -359,6 +456,17 @@ export function App() {
           workHourEnd={workHourEnd}
           manualValues={manualGridValues}
           onCellValueChange={handleSheetCellValueChange}
+        />
+      </div>
+
+      <div style={{ display: activeTab === "D" ? "block" : "none" }}>
+        <AnalysisScreenD
+          logs={sortedLogs}
+          staffs={staffs}
+          manualGridValues={manualGridValues}
+          selectedStaffId={selectedStaffId}
+          workHourStart={workHourStart}
+          workHourEnd={workHourEnd}
         />
       </div>
     </div>
