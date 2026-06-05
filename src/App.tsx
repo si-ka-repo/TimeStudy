@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { AppTabNav } from "./components/AppTabNav";
+import { APP_TABS, type AppTabId } from "./config/appTabs";
 import { exportOfficialTemplate, type ExportMeta } from "./features/export/exportOfficialTemplate";
 import { isCloudSyncEnabled, loadCloudSnapshot, saveCloudSnapshot, type CloudSnapshot } from "./features/persistence/cloudSnapshot";
 import { AnalysisScreenD } from "./features/timestudy/AnalysisScreenD";
@@ -7,7 +9,7 @@ import { SettingsScreenC, type WorkHourPreset } from "./features/timestudy/Setti
 import { InputScreenA, type InProgressAction, type LogDraft, type StaffOption } from "./features/timestudy/InputScreenA";
 import { SheetScreenB } from "./features/timestudy/SheetScreenB";
 
-type UiTab = "A" | "B" | "C" | "D";
+type UiTab = AppTabId;
 
 type UiLog = {
   id: string;
@@ -391,25 +393,20 @@ export function App() {
     <div className="app">
       <header className="header">
         <h1>介護タイムスタディ</h1>
-        <div className="tabs">
-          <button type="button" className={activeTab === "A" ? "tab active" : "tab"} onClick={() => switchTab("A")}>
-            画面A 設定
-          </button>
-          <button type="button" className={activeTab === "B" ? "tab active" : "tab"} onClick={() => switchTab("B")}>
-            画面B ログ入力
-          </button>
-          <button type="button" className={activeTab === "C" ? "tab active" : "tab"} onClick={() => switchTab("C")}>
-            画面C 提出チェック
-          </button>
-          <button type="button" className={activeTab === "D" ? "tab active" : "tab"} onClick={() => switchTab("D")}>
-            画面D DX改善提案
-          </button>
-        </div>
+        <AppTabNav activeTab={activeTab} onSelectTab={switchTab} />
       </header>
 
-      <p className="notice">{notice}</p>
+      <p className="notice" role="status">
+        {notice}
+      </p>
 
-      <div style={{ display: activeTab === "A" ? "block" : "none" }}>
+      <div
+        id={APP_TABS[0].panelId}
+        role="tabpanel"
+        aria-labelledby="tab-A"
+        className="tabpanel"
+        hidden={activeTab !== "A"}
+      >
         <SettingsScreenC
           staffs={staffs}
           selectedStaffId={selectedStaffId}
@@ -436,7 +433,13 @@ export function App() {
         />
       </div>
 
-      <div style={{ display: activeTab === "B" ? "block" : "none" }}>
+      <div
+        id={APP_TABS[1].panelId}
+        role="tabpanel"
+        aria-labelledby="tab-B"
+        className="tabpanel"
+        hidden={activeTab !== "B"}
+      >
         <InputScreenA
           staffs={staffs}
           selectedStaffId={selectedStaffId}
@@ -447,7 +450,13 @@ export function App() {
         />
       </div>
 
-      <div style={{ display: activeTab === "C" ? "block" : "none" }}>
+      <div
+        id={APP_TABS[2].panelId}
+        role="tabpanel"
+        aria-labelledby="tab-C"
+        className="tabpanel"
+        hidden={activeTab !== "C"}
+      >
         <SheetScreenB
           staffs={staffs}
           logs={sortedLogs}
@@ -459,7 +468,13 @@ export function App() {
         />
       </div>
 
-      <div style={{ display: activeTab === "D" ? "block" : "none" }}>
+      <div
+        id={APP_TABS[3].panelId}
+        role="tabpanel"
+        aria-labelledby="tab-D"
+        className="tabpanel"
+        hidden={activeTab !== "D"}
+      >
         <AnalysisScreenD
           logs={sortedLogs}
           staffs={staffs}

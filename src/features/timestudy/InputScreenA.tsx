@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
 import { TIME_STUDY_ACTIONS, type TimeStudyActionDefinition } from "../../config/timeStudyActions";
 
 export type StaffOption = {
@@ -210,55 +212,66 @@ export function InputScreenA({
   }
 
   function renderActionButton(action: TimeStudyActionDefinition) {
+    const isRecording = activeAction?.action.subNo === action.subNo;
+    const isSelected = selectedActionSubNo === action.subNo;
+    const className = [
+      "action-btn",
+      isRecording ? "action-btn--recording" : "",
+      !isRecording && isSelected ? "action-btn--selected" : "",
+      longPressEnabled && !isRecording ? "action-btn--long-press-mode" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
     return (
       <button
         key={action.subNo}
         type="button"
+        className={className}
         onClick={longPressEnabled ? undefined : () => transitionAction(action)}
         onPointerDown={() => handleActionPointerDown(action)}
         onPointerUp={() => handleActionPointerUp(action)}
         onPointerLeave={handleActionPointerLeave}
         onPointerCancel={handleActionPointerLeave}
-        aria-pressed={selectedActionSubNo === action.subNo}
-        style={{
-          textAlign: "left",
-          padding: "10px 12px",
-          borderRadius: 8,
-          border: "1px solid #999",
-          background: selectedActionSubNo === action.subNo ? "#e9fff2" : "#fff",
-        }}
+        aria-pressed={isSelected}
+        aria-label={`${action.subNo}. ${action.actionName}${isRecording ? "（記録中）" : ""}`}
       >
         {action.subNo}. {action.actionName}
+        {isRecording ? <span className="action-btn__badge">● 記録中</span> : null}
       </button>
     );
   }
 
   return (
-    <main style={{ padding: 16, display: "grid", gap: 16 }}>
-      <section style={staffInfoCardStyle}>
+    <main className="screen-main">
+      <Card variant="info" style={staffInfoCardStyle}>
         <strong>設定中の職員</strong>
         <span>{selectedStaffId ? selectedStaffName : "未設定（画面Aで選択）"}</span>
-      </section>
+      </Card>
 
-      <section style={stickyInProgressCardStyle}>
-        <strong style={{ color: "#234760" }}>進行中</strong>
+      <Card
+        variant={activeAction ? "inProgressActive" : "inProgress"}
+        style={stickyInProgressCardStyle}
+      >
+        {activeAction ? <span className="in-progress-badge">記録中</span> : null}
+        <strong style={{ color: "var(--color-text-strong)" }}>進行中</strong>
         {activeAction ? (
           <div style={{ display: "grid", gap: 2, fontSize: 13 }}>
             <span>職員: {selectedStaffName}</span>
             <span>項目: {activeAction.action.actionName}</span>
             <span>開始: {activeAction.startTime.toLocaleString("ja-JP")}</span>
-            <span style={{ fontWeight: 700, color: "#9a2f3f" }}>経過: {elapsedText}</span>
+            <span style={{ fontWeight: 700, color: "var(--color-danger)" }}>経過: {elapsedText}</span>
             {isLongRunning ? <span style={warningTextStyle}>5分以上進行中です。終了登録漏れに注意してください。</span> : null}
           </div>
         ) : (
-          <span style={{ fontSize: 13, color: "#556f80" }}>進行中の記録はありません</span>
+          <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>進行中の記録はありません</span>
         )}
-      </section>
+      </Card>
 
       <section>
         <h2>介助項目（クイック選択）</h2>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
-          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, minHeight: "var(--touch-min)" }}>
             <input
               type="checkbox"
               checked={longPressEnabled}
@@ -266,20 +279,24 @@ export function InputScreenA({
             />
             長押しで項目開始（誤爆回避）
           </label>
-          <span style={{ fontSize: 12, color: "#5a6f80" }}>{longPressEnabled ? "長押し(0.6秒)で開始/切替" : "タップで開始/切替"}</span>
+          <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
+            {longPressEnabled ? "長押し(0.6秒)で開始/切替" : "タップで開始/切替"}
+          </span>
         </div>
+
+        {longPressEnabled ? (
+          <p className="long-press-banner" role="note">
+            長押しモード中です。各項目を約0.6秒押し続けると開始・切替します（短いタップでは反応しません）。
+          </p>
+        ) : null}
 
         <div style={{ background: "#ffeef3", border: "1px solid #f4ccd8", borderRadius: 10, padding: 10 }}>
           <p style={{ margin: "0 0 8px", color: "#3f6179", fontSize: 13 }}>1-9: 直接介護</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8 }}>
-            {directCareActions.map(renderActionButton)}
-          </div>
+          <div className="action-grid">{directCareActions.map(renderActionButton)}</div>
         </div>
         <div style={{ marginTop: 10, background: "#fff9e8", border: "1px solid #f0dfad", borderRadius: 10, padding: 10 }}>
           <p style={{ margin: "0 0 8px", color: "#3f6179", fontSize: 13 }}>10-24: 間接業務・休憩・その他・余裕時間</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8 }}>
-            {nonDirectActions.map(renderActionButton)}
-          </div>
+          <div className="action-grid">{nonDirectActions.map(renderActionButton)}</div>
         </div>
       </section>
 
@@ -299,9 +316,9 @@ export function InputScreenA({
       <section>
         <h2>操作</h2>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          <button type="button" onClick={endCurrentAction} disabled={!activeAction}>
+          <Button variant="primary" onClick={endCurrentAction} disabled={!activeAction}>
             現在の項目を終了して登録
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -321,7 +338,7 @@ export function InputScreenA({
 
       <aside style={{ justifySelf: "end", width: "min(100%, 560px)" }}>
         <details>
-          <summary style={{ cursor: "pointer", fontWeight: 700 }}>登録ログ一覧（画面A）</summary>
+          <summary style={{ cursor: "pointer", fontWeight: 700 }}>登録ログ一覧（画面B）</summary>
           <div
             style={{
               marginTop: 8,
@@ -376,10 +393,6 @@ function formatElapsed(startTime: Date, now: number): string {
 }
 
 const staffInfoCardStyle: CSSProperties = {
-  border: "1px solid #d6e5f2",
-  borderRadius: 10,
-  background: "#ffffff",
-  padding: "8px 12px",
   display: "flex",
   gap: 10,
   alignItems: "center",

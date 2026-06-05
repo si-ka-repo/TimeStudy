@@ -229,7 +229,7 @@ export function SheetScreenB({
           </div>
 
           <details>
-            <summary style={{ cursor: "pointer", fontWeight: 700 }}>ログ一覧（画面B）</summary>
+            <summary style={{ cursor: "pointer", fontWeight: 700 }}>ログ一覧（画面C）</summary>
             <div style={{ marginTop: 8, border: "1px solid #d3dce2", borderRadius: 8, maxHeight: 280, width: "min(100vw - 64px, 720px)", overflow: "auto", background: "#fff" }}>
               {logs.length === 0 ? (
                 <p style={{ margin: 0, padding: 12, color: "#567" }}>ログはありません。</p>

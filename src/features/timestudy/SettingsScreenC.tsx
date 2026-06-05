@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 
+import { Button } from "../../components/ui/Button";
 import { HEADER_CELL_MAPPINGS } from "../export/officialTemplateMapping";
 import type { StaffOption } from "./InputScreenA";
 import type { ExportMeta } from "../export/exportOfficialTemplate";
@@ -368,9 +369,14 @@ export function SettingsScreenC({
               style={{ ...inputStyle, resize: "vertical" }}
             />
           </label>
-          <button type="button" onClick={onExportTemplate}>
+          <Button
+            variant="primary"
+            onClick={onExportTemplate}
+            disabled={!canExportTemplate}
+            title={!canExportTemplate ? `未入力: ${exportMissingFields.join("、")}` : undefined}
+          >
             公式テンプレートで出力（.xlsx）
-          </button>
+          </Button>
           {canExportTemplate ? (
             <p style={{ margin: 0, fontSize: 12, color: "#1c6b35" }}>出力に必要な入力は揃っています。</p>
           ) : (
